@@ -1,0 +1,6 @@
+[package]
+name = "ownership"
+version = "0.1.0"
+authors = ["Thomas Elder <tgelder@gmail.com>"]
+
+[dependencies]
