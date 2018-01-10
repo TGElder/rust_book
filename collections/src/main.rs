@@ -23,7 +23,24 @@ fn average(numbers: &[f32]) -> (f32, f32, i32) {
     (mean, median, mode)
 }
 
+fn pig_latin(text: &str) -> String {
+    let vowels = vec!['a', 'e', 'i', 'o', 'u'];
+
+    if vowels.contains(&text.chars().nth(0).unwrap()) {
+        String::new() + text + "-hay" 
+    }
+    else {
+        String::new() + &text[1..] + "-" + &text[0..1] + "ay"
+    }
+}
+
 fn main() {
     let numbers = vec![4.0, 8.0, 15.0, 16.0, 23.0, 8.0];
     println!("The averages are {:?}", average(&numbers));
+    let words = vec!["Pierre", "works", "in", "the", "engineering", "department"];
+    for word in words {
+        println!("{}", pig_latin(&word));
+    }
 }
+
+
