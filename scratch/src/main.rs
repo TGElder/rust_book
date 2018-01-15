@@ -1,14 +1,16 @@
-use std::fs::File;
-use std::io::ErrorKind;
-
 fn main() {
-    let f = File::open("hello.txt");
+    let string1 = String::from("abcd");
+    let string2 = "xyz";
 
-    let f = match f {
-        Ok(file) => file,
-        Err(error) => match error.kind() {
-            ErrorKind::NotFound => panic!("Not found!"),
-            _ => panic!("Unknown error!"),
-        },
-    };
+    let result = longest(string1.as_str(), string2);
+    println!("The longest string is {}", result);
+}
+
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() {
+        x
+    }
+    else {
+        y
+    }
 }
