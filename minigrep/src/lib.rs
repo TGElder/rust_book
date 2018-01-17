@@ -7,6 +7,7 @@ use std::error::Error;
 pub struct Args {
     pub query : String,
     pub filename : String,
+    pub case_sensitive: bool,
 }
 
 impl Args {
@@ -17,12 +18,15 @@ impl Args {
             return Err("Expected 2 arguments");
         }
 
-        Ok(Args { query : args[1].clone(), filename : args[2].clone() })
+        Ok(Args { query : args[1].clone(),
+            filename : args[2].clone(),
+            case_sensitive: env::var("CASE_INSENSITIVE").is_err()
+        })
     }
 }
 
 pub fn run(args: Args) -> Result<(), Box<Error>> {
-    for line in search(&args.query, &file_to_lines(&args.filename)?, true) {
+    for line in search(&args.query, &file_to_lines(&args.filename)?, args.case_sensitive) {
         println!("{}", line);
     }
     Ok(())
@@ -36,12 +40,18 @@ fn file_to_lines(file: &str) -> Result<Vec<String>, io::Error> {
 }
 
 fn search<'a, 'b>(query: &'a str, lines: &'b Vec<String>, case_sensitive: bool) -> Vec<&'b str> {
+    let mut pattern = String::from(query);
+
+    if !case_sensitive {
+        pattern = pattern.to_lowercase();
+    }
+
     lines.iter().map(|l| &l[..]).filter(|l| {
         if case_sensitive {
-            l.contains(query)
+            l.contains(&pattern)
         }
         else {
-            l.to_lowercase().contains(&query.to_lowercase())
+            l.to_lowercase().contains(&pattern)
         }}).collect()
 }
 
