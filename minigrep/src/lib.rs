@@ -12,14 +12,21 @@ pub struct Args {
 
 impl Args {
     pub fn new() -> Result<Args, &'static str> {
-        let args: Vec<String> = env::args().collect();
+        let mut args: std::env::Args = env::args();
 
-        if args.len() != 3 {
-            return Err("Expected 2 arguments");
-        }
+        args.next();
 
-        Ok(Args { query : args[1].clone(),
-            filename : args[2].clone(),
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a query string!"),
+        };
+
+        let filename = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a file name!"),
+        };
+
+        Ok(Args { query, filename,
             case_sensitive: env::var("CASE_INSENSITIVE").is_err()
         })
     }
