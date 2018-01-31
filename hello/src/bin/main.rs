@@ -1,3 +1,5 @@
+extern crate hello;
+
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::io::Read;
@@ -6,28 +8,18 @@ use std::fs::File;
 use std::thread;
 use std::time::Duration;
 use std::sync::{Mutex, Arc, mpsc};
-
+use hello::ThreadPool;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
+    let pool = ThreadPool::new(4);
 
-    let (tx, rx) = mpsc::channel();
-    let rx = Arc::new(Mutex::new(rx));
-    
-    for i in 0..4 {
-        let rx = Arc::clone(&rx);
-        thread::spawn(move || {
-            loop {
-                let stream = rx.lock().unwrap().recv().unwrap();
-                println!("Handled by thread {}", i);
-                handle_connection(stream);
-            }
-        });
-    };
-                
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        tx.send(stream).unwrap();
+        println!("Received request");
+        pool.execute(|| {
+            handle_connection(stream);
+        });
     }
 
 }
@@ -37,7 +29,7 @@ fn handle_connection(mut stream: TcpStream) {
     let bytes_read = stream.read(&mut buffer).unwrap();
     println!("Read {} bytes", bytes_read);
     let text = String::from_utf8_lossy(&buffer[..]);
-    println!("Read &text {}", text);
+    println!("Read {}", text);
     
     match read_uri(text.as_ref()) {
         Some("/") => serve_page(stream, 200, "hello.html"),
