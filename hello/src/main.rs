@@ -3,16 +3,33 @@ use std::net::TcpStream;
 use std::io::Read;
 use std::io::Write;
 use std::fs::File;
+use std::thread;
+use std::time::Duration;
+use std::sync::{Mutex, Arc, mpsc};
+
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
 
+    let (tx, rx) = mpsc::channel();
+    let rx = Arc::new(Mutex::new(rx));
+    
+    for i in 0..4 {
+        let rx = Arc::clone(&rx);
+        thread::spawn(move || {
+            loop {
+                let stream = rx.lock().unwrap().recv().unwrap();
+                println!("Handled by thread {}", i);
+                handle_connection(stream);
+            }
+        });
+    };
+                
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-
-        println!("Connection established!");
-        handle_connection(stream);
+        tx.send(stream).unwrap();
     }
+
 }
 
 fn handle_connection(mut stream: TcpStream) {
@@ -22,11 +39,13 @@ fn handle_connection(mut stream: TcpStream) {
     let text = String::from_utf8_lossy(&buffer[..]);
     println!("Read &text {}", text);
     
-    if let Some("/") = read_uri(text.as_ref()) {
-        serve_page(stream, 200, "hello.html");
-    }
-    else {
-        serve_page(stream, 404, "404.html");
+    match read_uri(text.as_ref()) {
+        Some("/") => serve_page(stream, 200, "hello.html"),
+        Some("/sleep") => {
+            thread::sleep(Duration::from_secs(5));
+            serve_page(stream, 200, "hello.html");
+        },
+        _ => serve_page(stream, 404, "404.html"),
     }
 }
 
