@@ -20,6 +20,7 @@ fn main() {
         pool.execute(|| {
             handle_connection(stream);
         });
+        break;
     }
 
 }
